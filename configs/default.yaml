@@ -1,0 +1,57 @@
+# Configuration for Kelly Auction Game Simulation
+game:
+  c: 400.0          # Maximum bid
+  eps: 1.0          # Minimum bid
+  delta: 0.1        # Aggregate regularization constant
+  a: 100.0          # Base valuation parameter
+  gamma: 0.0        # Heterogeneity slope (0, 5, 10)
+  n: 10             # Default number of agents
+
+simulation:
+  T: 3000           # Simulation horizon
+  mu: 90.0          # Initial bid normal distribution mean
+  sigma: 10.0       # Initial bid normal distribution std
+  conv_threshold: 1.0e-5  # Convergence criterion r_t < 1e-5
+
+experiments:
+  table1:
+    n_values: [2, 10, 20]
+    gamma_values: [0, 5, 10]
+    num_runs: 10
+    seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  fig3:
+    n: 10
+    gamma_values: [0, 5, 10]
+    num_runs: 10
+    seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  fig4:
+    n: 10
+    gamma: 0.0
+    num_runs: 10
+    seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    t_max: 2500
+  fig5:
+    n: 10
+    gamma: 0.0
+    seed: 0
+    alphas: [0.1, 0.8, 0.9]
+  fig6:
+    n: 10
+    gamma: 0.0
+    seed: 0
+    num_runs_avg: 10
+    seeds_avg: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    alphas_daq_br: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    alphas_ogd_br: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    alphas_daq_ogd: [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+  fig7:
+    n: 10
+    gamma: 0.0
+    seed: 0
+    alphas: [0.1, 0.2, 0.5, 0.8, 0.9]
+  sensitivity:
+    mu_sigma_pairs:
+      - [90.0, 10.0]
+      - [90.0, 30.0]
+      - [200.0, 50.0]
+    num_runs: 10
