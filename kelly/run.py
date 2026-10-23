@@ -8,7 +8,16 @@ import argparse
 import sys
 from typing import Optional
 
-from kelly.experiments import run_table1, run_fig3, load_config
+from kelly.experiments import (
+    run_table1,
+    run_fig3,
+    run_fig4,
+    run_fig5,
+    run_fig6,
+    run_fig7,
+    run_sensitivity,
+    load_config,
+)
 
 
 def main(argv: Optional[list] = None) -> None:
@@ -19,7 +28,7 @@ def main(argv: Optional[list] = None) -> None:
         "--target",
         type=str,
         required=True,
-        choices=["table1", "fig3", "fig4", "fig5", "fig6", "fig7", "all"],
+        choices=["table1", "fig3", "fig4", "fig5", "fig6", "fig7", "sensitivity", "all"],
         help="Experiment or artifact to generate.",
     )
     parser.add_argument(
@@ -52,11 +61,22 @@ def main(argv: Optional[list] = None) -> None:
             run_table1(config, output_dir=args.output_dir, g_bound_mode=mode)
 
     if args.target in ["fig3", "all"]:
-        # Figure 3 is generated with the empirical setting matching the paper
         run_fig3(config, output_dir=args.output_dir, g_bound_mode="empirical")
 
-    if args.target in ["fig4", "fig5", "fig6", "fig7"] and args.target != "all":
-        print(f"Target '{args.target}' will be executed in Phase 4.")
+    if args.target in ["fig4", "all"]:
+        run_fig4(config, output_dir=args.output_dir, g_bound_mode="empirical")
+
+    if args.target in ["fig5", "all"]:
+        run_fig5(config, output_dir=args.output_dir, g_bound_mode="empirical")
+
+    if args.target in ["fig6", "all"]:
+        run_fig6(config, output_dir=args.output_dir, g_bound_mode="empirical")
+
+    if args.target in ["fig7", "all"]:
+        run_fig7(config, output_dir=args.output_dir, g_bound_mode="empirical")
+
+    if args.target in ["sensitivity", "all"]:
+        run_sensitivity(config, output_dir=args.output_dir, g_bound_mode="empirical")
 
 
 if __name__ == "__main__":
