@@ -9,7 +9,7 @@ import pytest
 from kelly.game import KellyGame
 from kelly.equilibrium import compute_equilibrium
 from kelly.algorithms import simulate, simulate_heterogeneous
-from kelly.metrics import fixed_point_residual, check_convergence
+from kelly.metrics import fixed_point_residual, check_convergence, gap
 
 
 def test_3_theorem_2_sdsc_negative_definiteness():
@@ -115,6 +115,70 @@ def test_5_theorem_5_br_contraction_bound_and_rate():
             f"(Violated as expected! Required eps={data['eps_req']:.2f} vs actual eps=1.0). "
             f"Empirical linear rate rho = {data['rho_empirical']:.4f}"
         )
+
+
+def test_6_theorem_4_daq_gap_bound():
+    """Test 6: Theorem 4(2) DAQ variational gap bound verification.
+
+    Evaluates the theoretical bound (Eq. 29) for the DAQ algorithm with step-size
+    eta_i = eps * c_i / (a_i * sqrt(T)) where a_i >= eps.
+    Theoretical bound:
+        Gap_T(DAQ) <= (1 / (2 * eps * sqrt(T))) * (sum_i c_i + 4 * n * max_i c_i)
+                    = 5 * n * c / (2 * eps * sqrt(T))
+    This is run as a separate mathematical experiment from the main paper simulations
+    (which use D_i / (G_i * sqrt(T))).
+    """
+    T = 3000
+    report = []
+    for n in [2, 10, 20]:
+        for gamma in [0.0, 5.0, 10.0]:
+            game = KellyGame(n=n, gamma=gamma)
+            z_star = compute_equilibrium(game, tol=1e-12)
+
+            # Check condition: a_i >= eps for all i
+            assert np.all(game.a_vec >= game.eps), f"Condition a_i >= eps violated for n={n}, gamma={gamma}"
+
+            c_vec = np.full(n, game.c)
+            eta = game.eps * c_vec / (game.a_vec * np.sqrt(T))
+            rng = np.random.default_rng(123 + n + int(gamma))
+            z = np.clip(rng.normal(90.0, 10.0, size=n), game.eps, game.c)
+
+            z_hist = np.zeros((T, n), dtype=np.float64)
+            g_sum = np.zeros(n, dtype=np.float64)
+            for t in range(T):
+                z_hist[t] = z
+                g_t = game.gradient(z)
+                g_sum += g_t
+                z = np.clip(eta * g_sum, game.eps, game.c)
+
+            gap_vals = gap(game, z_hist, z_star)
+            gap_T = float(np.mean(gap_vals))
+
+            # Theorem 4(2) analytical bound (Eq. 29):
+            # Bound = (1 / (2 * eps * sqrt(T))) * (sum_i c_i + 4 * n * max_i c_i)
+            bound_analytical = (np.sum(c_vec) + 4.0 * n * np.max(c_vec)) / (2.0 * game.eps * np.sqrt(T))
+
+            assert np.isfinite(gap_T)
+            assert gap_T <= bound_analytical, (
+                f"Theorem 4(2) bound violated: n={n}, gamma={gamma}, Gap_T={gap_T} > bound={bound_analytical}"
+            )
+            report.append((n, gamma, gap_T, bound_analytical))
+
+    print("\n--- Theorem 4(2) DAQ Variational Gap Bound Verification ---")
+    print(f"{'n':>3} | {'gamma':>5} | {'Gap_T':>10} | {'Bound (Eq. 29)':>14} | {'Holds?':>6}")
+    print("-" * 50)
+    for n, gamma, gap_T, bound_analytical in report:
+        print(f"{n:3d} | {gamma:5.1f} | {gap_T:10.4f} | {bound_analytical:14.4f} | {'YES':>6}")
+
+
+def test_sensitivity_initial_conditions():
+    """Verification that initial bid parameters (mu, sigma) run cleanly."""
+    pairs = [(90.0, 10.0), (90.0, 30.0), (200.0, 50.0)]
+    for mu, sigma in pairs:
+        game = KellyGame(n=2, gamma=0.0)
+        res = simulate(game, algo="BR", T=50, seed=0, mu=mu, sigma=sigma)
+        assert res.converged
+        assert res.iterations_to_conv < 30
 
 
 def test_7_rmq_equals_daq_and_invariants():
